@@ -185,7 +185,7 @@ window.ST.Views.practice = {
       }).join('');
 
       bodyHtml = `
-        <div class="opt-list ${isJudge ? 'judge-pair' : ''}">${optsHtml}</div>
+        <div class="opt-list">${optsHtml}</div>
         ${isMulti && !reveal ? `
           <button type="button" class="btn btn-primary btn-block" id="btn-multi-ok" ${selectedSet.size === 0 ? 'disabled' : ''}>
             确认提交${selectedSet.size > 0 ? `（已选 ${[...selectedSet].sort().join('')}）` : ''}
@@ -246,9 +246,7 @@ window.ST.Views.practice = {
 
         <div class="study-body" id="prac-swipe-area">
           <div class="q-paper-card">
-            <div class="q-stem-line">
-              ${qtypeBadgeHtml(q.qtype)}<span>${escapeHtml(q.content)}</span>
-            </div>
+            <div class="q-stem-line">${qtypeBadgeHtml(q.qtype)}<span class="q-stem-text">${escapeHtml(q.content)}</span></div>
 
             ${bodyHtml}
             ${explainHtml}
@@ -465,8 +463,10 @@ window.ST.Views.practice = {
   },
 
   openAnswerSheetDrawer(container, app) {
+    const { qtypeBadgeHtml, QTYPE_META } = window.ST;
     const st = this.state;
-    const circles = st.questions.map((item, idx) => {
+
+    const tileHtml = (item, idx) => {
       const s = st.sessionMap[item.id];
       let cls = 'sheet-dot';
       if (idx === st.currentIndex) cls += ' current';
@@ -475,12 +475,78 @@ window.ST.Views.practice = {
       else if (item.stats.in_wrong_book) cls += ' wrong';
       if (item.stats.bookmarked) cls += ' flagged';
       return `<button type="button" class="${cls}" data-sd-idx="${idx}">${idx + 1}</button>`;
-    }).join('');
+    };
+
+    let contentHtml = '';
+    let jumpPillsHtml = '';
+
+    if (st.mode === 'random') {
+      const circles = st.questions.map((item, idx) => tileHtml(item, idx)).join('');
+      contentHtml = `<div class="sheet-circles">${circles}</div>`;
+    } else {
+      // Group strictly by question type: 单选 -> 多选 -> 判断 -> 简答
+      const sections = [];
+      for (const t of ['single', 'multiple', 'judge', 'short']) {
+        const list = [];
+        st.questions.forEach((item, idx) => {
+          if (item.qtype === t) list.push({ item, idx });
+        });
+        if (list.length > 0) {
+          sections.push({
+            qtype: t,
+            label: QTYPE_META[t].label,
+            firstNum: list[0].idx + 1,
+            lastNum: list[list.length - 1].idx + 1,
+            list,
+          });
+        }
+      }
+
+      if (sections.length > 1) {
+        jumpPillsHtml = `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+            ${sections.map((sec) => `
+              <button type="button" class="chip" data-sd-sec="${sec.qtype}" style="font-size:12px;">
+                ${sec.label} <span class="mono">${sec.firstNum}-${sec.lastNum}</span>
+              </button>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      contentHtml = sections.map((sec) => {
+        const rangeText = sec.firstNum === sec.lastNum ? `第 ${sec.firstNum} 题` : `${sec.firstNum} – ${sec.lastNum} 题`;
+        const secDoneOk = sec.list.filter(({ item }) => {
+          const s = st.sessionMap[item.id];
+          return (s && s.submitted && s.isCorrect === true) || (!s && item.stats.last_is_correct === 1);
+        }).length;
+        const secDoneErr = sec.list.filter(({ item }) => {
+          const s = st.sessionMap[item.id];
+          return (s && s.submitted && s.isCorrect === false) || (!s && item.stats.in_wrong_book);
+        }).length;
+        const circles = sec.list.map(({ item, idx }) => tileHtml(item, idx)).join('');
+        return `
+          <div id="sd-sec-${sec.qtype}" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 0 10px;border-bottom:1px solid var(--border);margin-bottom:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                ${qtypeBadgeHtml(sec.qtype)}
+                <strong class="mono" style="font-size:13.5px;">${rangeText}</strong>
+                <span style="font-size:12px;color:var(--text-3);">共 ${sec.list.length} 题</span>
+              </div>
+              <div class="mono" style="font-size:12px;color:var(--text-3);">
+                <span style="color:var(--green);">对 ${secDoneOk}</span> · <span style="color:var(--red);">错 ${secDoneErr}</span>
+              </div>
+            </div>
+            <div class="sheet-circles">${circles}</div>
+          </div>
+        `;
+      }).join('');
+    }
 
     app.openDrawer({
       title: `答题卡（${st.currentIndex + 1} / ${st.questions.length}）`,
       bodyHtml: `
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;font-size:12px;color:var(--text-2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:12px;color:var(--text-2);">
           <div style="display:flex;gap:12px;">
             <span><strong style="color:var(--green)">●</strong> 正确</span>
             <span><strong style="color:var(--red)">●</strong> 错题</span>
@@ -489,9 +555,16 @@ window.ST.Views.practice = {
           </div>
           <button type="button" class="btn btn-sm btn-secondary" id="sheet-clear-sess">清空本次记录</button>
         </div>
-        <div class="sheet-circles">${circles}</div>
+        ${jumpPillsHtml}
+        ${contentHtml}
       `,
       onMount: (root) => {
+        root.querySelectorAll('[data-sd-sec]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const target = root.querySelector(`#sd-sec-${btn.dataset.sdSec}`);
+            target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        });
         root.querySelectorAll('[data-sd-idx]').forEach((btn) => {
           btn.addEventListener('click', () => {
             app.closeDrawer();

@@ -173,22 +173,64 @@ class LocalQuizDB {
 
   async ensureSeeded() {
     await this.open();
-    const banks = await this._getAll('banks');
-    if (banks.length > 0) return;
-
     try {
       const resp = await fetch('./data/initial_bank.json');
       if (!resp.ok) return;
       const data = await resp.json();
-      if (data && Array.isArray(data.questions) && data.questions.length > 0) {
-        const res = await this.importQuestions({
-          questions: data.questions,
-          bankName: data.bank?.name || '配电自动化题库',
+
+      // Normalize both multi-bank v2 format and legacy single-bank format
+      let builtinBanks = [];
+      if (data && Array.isArray(data.banks)) {
+        builtinBanks = data.banks;
+      } else if (data && Array.isArray(data.questions)) {
+        builtinBanks = [{
+          builtin_key: 'peidian_zidonghua',
+          name: data.bank?.name || '配电自动化题库',
           description: data.bank?.description || '',
-          sourceFile: data.bank?.source_file || 'initial_bank.csv',
+          source_file: data.bank?.source_file || 'initial_bank.csv',
+          questions: data.questions,
+        }];
+      }
+      if (!builtinBanks.length) return;
+
+      const [existingBanks, settings] = await Promise.all([
+        this._getAll('banks'),
+        this.getSettings(),
+      ]);
+      const existingNames = new Set(existingBanks.map((b) => (b.name || '').trim()));
+      const seededKeys = new Set(Array.isArray(settings.seeded_builtin_keys) ? settings.seeded_builtin_keys : []);
+      let changed = false;
+      let firstSeededId = null;
+
+      for (const b of builtinBanks) {
+        const key = b.builtin_key || b.name;
+        if (seededKeys.has(key) || existingNames.has((b.name || '').trim())) {
+          if (!seededKeys.has(key)) {
+            seededKeys.add(key);
+            changed = true;
+          }
+          continue;
+        }
+        if (!Array.isArray(b.questions) || !b.questions.length) continue;
+        const res = await this.importQuestions({
+          questions: b.questions,
+          bankName: b.name,
+          description: b.description || '',
+          sourceFile: b.source_file || '',
           skipDuplicates: true,
         });
-        await this.updateSettings({ active_bank_id: res.bank_id });
+        if (firstSeededId === null) firstSeededId = res.bank_id;
+        seededKeys.add(key);
+        existingNames.add((b.name || '').trim());
+        changed = true;
+      }
+
+      if (changed) {
+        const updates = { seeded_builtin_keys: [...seededKeys] };
+        if (!settings.active_bank_id && firstSeededId !== null && existingBanks.length === 0) {
+          updates.active_bank_id = firstSeededId;
+        }
+        await this.updateSettings(updates);
       }
     } catch (err) {
       console.warn('Seed initial_bank.json skipped:', err);
@@ -396,9 +438,10 @@ class LocalQuizDB {
     const bankMap = new Map(banks.map((b) => [b.id, b.name]));
     const statsMap = new Map(statsList.map((s) => [s.question_id, s]));
 
+    const qtypeOrder = { single: 0, multiple: 1, judge: 2, short: 3 };
     let list = questions;
     if (bankId) list = list.filter((q) => q.bank_id === Number(bankId));
-    list.sort((a, b) => a.id - b.id);
+    list.sort((a, b) => (qtypeOrder[a.qtype] ?? 9) - (qtypeOrder[b.qtype] ?? 9) || a.id - b.id);
 
     return list.map((q) => ({
       ...q,

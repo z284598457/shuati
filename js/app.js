@@ -106,7 +106,13 @@ const App = {
 
   themeIcon() {
     const t = this.state.settings.theme || 'light';
-    return t === 'dark' ? '🌙' : t === 'eyecare' ? '🌿' : '☀️';
+    if (t === 'dark') {
+      return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    }
+    if (t === 'eyecare') {
+      return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>';
+    }
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
   },
 
   applyTheme(theme) {
@@ -117,7 +123,7 @@ const App = {
       meta.setAttribute('content', t === 'dark' ? '#0c1220' : t === 'eyecare' ? '#ece8dc' : '#1677ff');
     }
     const btn = document.getElementById('btn-quick-theme');
-    if (btn) btn.textContent = t === 'dark' ? '🌙' : t === 'eyecare' ? '🌿' : '☀️';
+    if (btn) btn.innerHTML = this.themeIcon();
   },
 
   async setTheme(theme) {

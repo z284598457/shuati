@@ -237,16 +237,20 @@ button { cursor: pointer; }
 .icon-circle-btn {
   width: 36px;
   height: 36px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--bg-subtle);
-  font-size: 16px;
+  color: var(--text-1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
   transition: background 0.15s;
 }
 .icon-circle-btn:hover { background: var(--bg-hover); }
+.icon-circle-btn svg { display: block; }
 
 .app-main {
   flex: 1;
@@ -366,6 +370,24 @@ body.immersive-mode .app-main {
   transition: background 0.15s;
 }
 .hero-bank-btn:hover { background: rgba(255, 255, 255, 0.26); }
+.hero-circle-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.hero-circle-btn:hover { background: rgba(255, 255, 255, 0.28); }
+.hero-circle-btn svg { display: block; }
 .hero-bank-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -713,8 +735,12 @@ body.immersive-mode .app-main {
   line-height: 1.72;
   color: var(--text-1);
   margin: 0 0 20px;
-  white-space: pre-wrap;
   word-break: break-word;
+  text-indent: 0;
+}
+
+.q-stem-text {
+  white-space: pre-wrap;
 }
 
 .q-stem-line .badge {
@@ -728,11 +754,6 @@ body.immersive-mode .app-main {
   flex-direction: column;
   gap: 11px;
   margin-bottom: 18px;
-}
-.opt-list.judge-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
 }
 
 .opt-btn {

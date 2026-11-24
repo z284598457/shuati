@@ -131,7 +131,7 @@ window.ST.Views.banks = {
           <div class="card-head">
             <h2 class="card-title">📥 导入题库文件（支持后期随时追加更新）</h2>
           </div>
-          <input type="file" id="imp-file" accept=".csv,.xlsx,.json,.txt" class="hidden" />
+          <input type="file" id="imp-file" accept=".csv,.xlsx,.xls,.json,.txt" class="hidden" />
           <div id="imp-drop" class="dropzone">
             <div style="font-size:30px;margin-bottom:6px;">📄</div>
             <div style="font-size:14.5px;font-weight:700;margin-bottom:4px;">点击选择或拖拽 CSV / XLSX / JSON 文件到此处</div>

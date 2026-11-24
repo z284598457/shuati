@@ -32,17 +32,17 @@ const STANDARD_HEADERS = [
 ];
 
 const HEADER_ALIASES = {
-  code: ['试题编号', '题号', '编号', '题目编号', 'code', 'id'],
+  code: ['试题编号', '试题编码', '题号', '编号', '题目编号', 'code', 'id'],
   qtype: ['题型', '题目类型', '类型', '试题类型', 'qtype', 'type'],
   content: ['试题正文', '题干', '题目', '试题内容', '题目内容', '问题', 'content', 'question', 'stem'],
   options: ['试题选项', '选项', '备选项', 'options', 'choices'],
   answer: ['试题答案', '正确答案', '标准答案', '参考答案', '答案', 'answer'],
-  explanation: ['答案解析', '解析', '题目解析', '详解', 'explanation', 'analysis'],
+  explanation: ['答案解析', '判断题解析', '解析', '题目解析', '详解', 'explanation', 'analysis'],
   scoring_criteria: ['答案要点及评分标准', '评分标准', '得分要点', '答案要点', '评分要点', 'scoring_criteria', 'rubric'],
-  category: ['依据出处', '出处', '知识点', '分类', '章节', '模块', '专业分类', 'category', 'chapter', 'source'],
+  category: ['依据出处', '二级纲要', '出处', '知识点', '分类', '章节', '模块', '专业分类', 'category', 'chapter', 'source'],
   difficulty: ['难度', '难易度', '难度等级', 'difficulty'],
   level: ['适用等级', '等级', '级别', 'level'],
-  default_score: ['答题分数', '分值', '分数', '默认分值', 'default_score', 'score'],
+  default_score: ['答题分数', '试题分数', '分值', '分数', '默认分值', 'default_score', 'score'],
   default_time: ['答题时间', '建议用时', '时间', 'default_time'],
   author: ['出题人', '作者', '命题人', 'author'],
   remark: ['备注', '说明', 'remark', 'note'],
@@ -66,7 +66,7 @@ function normHeader(name) {
 function cleanOptionText(text) {
   let s = String(text || '').trim();
   s = s.replace(/\r?\n+/g, '').trim();
-  s = s.replace(/^[（(]?[A-Ha-h][）)]?\s*[、\.．\)）:：]\s*/, '').trim();
+  s = s.replace(/^[（(]?[A-Ha-h][）)]?\s*[、\.．\)）:：\-—]\s*/, '').trim();
   return s;
 }
 
@@ -402,17 +402,20 @@ async function parseQuestionFile(file) {
   const uint8 = new Uint8Array(ab);
 
   let rawDicts = [];
+  const isZipMagic = uint8.length >= 4 && uint8[0] === 0x50 && uint8[1] === 0x4b && uint8[2] === 0x03 && uint8[3] === 0x04;
   if (ext === 'json') {
     const parsed = JSON.parse(decodeBytesToText(uint8));
     if (Array.isArray(parsed)) rawDicts = parsed;
     else if (parsed && Array.isArray(parsed.questions)) rawDicts = parsed.questions;
     else throw new Error('JSON 格式无效：应为题目数组或含 questions 字段的对象');
-  } else if (ext === 'xlsx') {
+  } else if (ext === 'xlsx' || (ext === 'xls' && isZipMagic)) {
     const matrix = await parseXlsxMatrix(uint8);
     rawDicts = matrixToDicts(matrix);
   } else if (ext === 'csv' || ext === 'txt') {
     const matrix = parseCsvMatrix(decodeBytesToText(uint8));
     rawDicts = matrixToDicts(matrix);
+  } else if (ext === 'xls') {
+    throw new Error('该 .xls 为旧版二进制 Excel 格式，请先在 Excel/WPS 中另存为 .xlsx 或 .csv 后导入');
   } else {
     throw new Error(`暂不支持 .${ext} 格式（支持 .csv、.xlsx、.json）`);
   }

@@ -575,7 +575,7 @@ window.ST.Views.exam = {
       }).join('');
 
       bodyHtml = `
-        <div class="opt-list ${isJudge ? 'judge-pair' : ''}">${optsHtml}</div>
+        <div class="opt-list">${optsHtml}</div>
         ${instant && isMulti && !item.is_locked ? `
           <button type="button" class="btn btn-primary btn-block" id="btn-ex-multi-lock" ${uSet.size === 0 ? 'disabled' : ''}>
             确认提交本题${uSet.size > 0 ? `（已选 ${[...uSet].sort().join('')}）` : ''}
@@ -640,9 +640,7 @@ window.ST.Views.exam = {
 
         <div class="study-body" id="exam-swipe-area">
           <div class="q-paper-card">
-            <div class="q-stem-line">
-              ${qtypeBadgeHtml(item.qtype)}<span>${escapeHtml(item.content)}</span>
-            </div>
+            <div class="q-stem-line">${qtypeBadgeHtml(item.qtype)}<span class="q-stem-text">${escapeHtml(item.content)}</span></div>
             ${bodyHtml}
             ${feedbackHtml}
 
@@ -846,6 +844,9 @@ window.ST.Views.exam = {
     const groupsHtml = ['single', 'multiple', 'judge', 'short'].map((t) => {
       const list = exam.items.map((it, idx) => ({ it, idx })).filter((x) => x.it.qtype === t);
       if (!list.length) return '';
+      const firstNum = list[0].idx + 1;
+      const lastNum = list[list.length - 1].idx + 1;
+      const rangeText = firstNum === lastNum ? `第 ${firstNum} 题` : `${firstNum} – ${lastNum} 题`;
       const dots = list.map(({ it, idx }) => {
         let cls = 'sheet-dot';
         if (idx === this.state.currentIndex) cls += ' current';
@@ -858,7 +859,11 @@ window.ST.Views.exam = {
         return `<button type="button" class="${cls}" data-es-idx="${idx}">${idx + 1}</button>`;
       }).join('');
       return `
-        <div style="font-size:13px;font-weight:700;color:var(--text-2);margin:12px 0 8px;">${cn[g++]}、${QTYPE_META[t].label}（${list.length}题）</div>
+        <div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+          ${window.ST.qtypeBadgeHtml(t)}
+          <strong class="mono" style="font-size:13px;">${rangeText}</strong>
+          <span style="font-size:12px;color:var(--text-3);">共 ${list.length} 题</span>
+        </div>
         <div class="sheet-circles">${dots}</div>
       `;
     }).join('');
@@ -940,8 +945,9 @@ window.ST.Views.exam = {
           if (isShort) {
             const half = Math.round(it.score_value * 5) / 10;
             detail = `
-              <div style="background:var(--bg-subtle);padding:10px 12px;border-radius:10px;margin-bottom:10px;font-size:13.5px;white-space:pre-wrap;">
-                <strong style="color:var(--text-3);font-size:12px;">你的作答：</strong><br/>${escapeHtml(it.user_answer || '（未作答）')}
+              <div style="background:var(--bg-subtle);padding:10px 12px;border-radius:10px;margin-bottom:10px;font-size:13.5px;">
+                <strong style="color:var(--text-3);font-size:12px;">你的作答：</strong>
+                <div style="white-space:pre-wrap;margin-top:4px;line-height:1.65;">${escapeHtml(it.user_answer || '（未作答）')}</div>
               </div>
               <div class="explain-box is-ok" style="margin-top:0;">
                 <div class="explain-row" style="margin-top:0;"><span class="explain-key">参考答案：</span>${escapeHtml(it.display_answer)}</div>
@@ -976,7 +982,7 @@ window.ST.Views.exam = {
               `;
             }).join('');
             detail = `
-              <div class="opt-list ${it.qtype === 'judge' ? 'judge-pair' : ''}" style="margin-bottom:10px;gap:8px;">${opts}</div>
+              <div class="opt-list" style="margin-bottom:10px;gap:8px;">${opts}</div>
               <div style="font-size:13px;color:var(--text-2);display:flex;gap:14px;flex-wrap:wrap;">
                 <span>你选：<strong style="color:${it.is_correct === 1 ? 'var(--green)' : 'var(--red)'}">${escapeHtml(formatAnswerLabel(it.qtype, it.user_answer))}</strong></span>
                 <span>答案：<strong style="color:var(--green)">${escapeHtml(formatAnswerLabel(it.qtype, it.display_answer))}</strong></span>

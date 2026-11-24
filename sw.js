@@ -3,7 +3,7 @@
  * Pre-caches full app shell + initial 100-question bank for 100% offline usage.
  */
 
-const CACHE_NAME = 'shuatishq-pwa-v1.0.1';
+const CACHE_NAME = 'shuatishq-pwa-v1.0.4';
 const CORE_ASSETS = [
   './',
   './index.html',

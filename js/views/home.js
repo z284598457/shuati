@@ -58,7 +58,7 @@ window.ST.Views.home = {
           </button>
           <div style="display:flex;align-items:center;gap:8px;">
             ${app.deferredInstallPrompt ? `<button type="button" id="home-install-btn" class="hero-bank-btn" style="padding:6px 12px;font-size:12.5px;">📲 安装</button>` : ''}
-            <button type="button" id="home-theme-btn" class="hero-bank-btn" style="padding:6px 11px;font-size:14px;" title="切换主题">${app.themeIcon()}</button>
+            <button type="button" id="home-theme-btn" class="hero-circle-btn" title="切换主题" aria-label="切换主题">${app.themeIcon()}</button>
           </div>
         </div>
 
