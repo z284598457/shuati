@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light" data-font="md">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>刷题神器</title>
+  <meta name="description" content="刷题神器 PWA 离线备考应用：支持单选、多选、判断、简答、顺序练习、背题模式、随机练习、章节练习、模拟考试、错题本与题库导入" />
+  <meta name="theme-color" content="#1677ff" id="meta-theme-color" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="刷题神器" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Desktop Top Navigation Bar (auto-hidden on mobile & immersive study/exam pages) -->
+    <header id="desktop-topbar" class="desktop-topbar">
+      <div class="desktop-topbar-inner">
+        <div class="topbar-brand" id="topbar-logo-btn" role="button" tabindex="0">
+          <img src="./icons/icon-192.png" alt="刷题神器" class="topbar-icon" />
+          <div>
+            <div class="topbar-title">刷题神器</div>
+            <div class="topbar-sub">PWA 离线刷题版</div>
+          </div>
+        </div>
+
+        <nav class="topbar-tabs" aria-label="主导航">
+          <button class="topbar-tab active" data-tab="home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6.5h-5V21H4a1 1 0 0 1-1-1v-9.5z"/></svg>
+            <span>刷题</span>
+          </button>
+          <button class="topbar-tab" data-tab="search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+            <span>搜题</span>
+          </button>
+          <button class="topbar-tab" data-tab="banks">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>题库</span>
+          </button>
+          <button class="topbar-tab" data-tab="me">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span>我的</span>
+          </button>
+        </nav>
+
+        <div class="topbar-right">
+          <button id="btn-install-pwa-top" class="btn btn-sm btn-install hidden">📲 安装到桌面</button>
+          <button id="btn-quick-theme" class="icon-circle-btn" title="切换主题（日间 / 护眼 / 夜间）">☀️</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dynamic View Container -->
+    <main id="app-main" class="app-main"></main>
+
+    <!-- Mobile Bottom Tab Bar (visible on top-level tabs) -->
+    <nav id="bottom-tabbar" class="bottom-tabbar" aria-label="底部导航">
+      <button class="tab-item active" data-tab="home">
+        <span class="tab-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6.5h-5V21H4a1 1 0 0 1-1-1v-9.5z"/></svg>
+        </span>
+        <span class="tab-lbl">刷题</span>
+      </button>
+      <button class="tab-item" data-tab="search">
+        <span class="tab-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+        </span>
+        <span class="tab-lbl">搜题</span>
+      </button>
+      <button class="tab-item" data-tab="banks">
+        <span class="tab-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        <span class="tab-lbl">题库</span>
+      </button>
+      <button class="tab-item" data-tab="me">
+        <span class="tab-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </span>
+        <span class="tab-lbl">我的</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom Sheet Drawer (Answer Sheet / Settings / Bank Picker) -->
+  <div id="drawer-root" class="drawer-backdrop hidden" role="dialog" aria-modal="true"></div>
+
+  <!-- Center Modal Dialog -->
+  <div id="modal-root" class="modal-backdrop hidden" role="dialog" aria-modal="true"></div>
+
+  <!-- Toast Stack -->
+  <div id="toast-root" class="toast-stack" aria-live="polite"></div>
+
+  <script src="./js/importer.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/views/home.js"></script>
+  <script src="./js/views/practice.js"></script>
+  <script src="./js/views/exam.js"></script>
+  <script src="./js/views/banks.js"></script>
+  <script src="./js/views/more.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
