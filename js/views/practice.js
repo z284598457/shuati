@@ -353,6 +353,7 @@ window.ST.Views.practice = {
 
     container.querySelectorAll('.opt-btn[data-opt]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (Date.now() < (st.suppressClickUntil || 0)) return;
         if (st.answerMode) return;
         const sess = getSess();
         if (sess.submitted) return;
@@ -371,6 +372,7 @@ window.ST.Views.practice = {
     });
 
     container.querySelector('#btn-multi-ok')?.addEventListener('click', () => {
+      if (Date.now() < (st.suppressClickUntil || 0)) return;
       const sess = getSess();
       if (!sess.selected.length) return;
       doSubmit([...sess.selected].sort().join(''));
@@ -380,13 +382,16 @@ window.ST.Views.practice = {
       getSess().shortDraft = e.target.value;
     });
     container.querySelector('#btn-short-show')?.addEventListener('click', () => {
+      if (Date.now() < (st.suppressClickUntil || 0)) return;
       getSess().shortRevealed = true;
       this.paint(container, app);
     });
     container.querySelector('#btn-short-ok')?.addEventListener('click', () => {
+      if (Date.now() < (st.suppressClickUntil || 0)) return;
       doSubmit(getSess().shortDraft || '（自评答对）', true);
     });
     container.querySelector('#btn-short-err')?.addEventListener('click', () => {
+      if (Date.now() < (st.suppressClickUntil || 0)) return;
       doSubmit(getSess().shortDraft || '（自评答错）', false);
     });
 
@@ -426,28 +431,46 @@ window.ST.Views.practice = {
       this.openAnswerSheetDrawer(container, app);
     });
 
-    // Touch swipe left / right for native mobile feel
+    // Touch swipe left / right for native mobile feel (suppresses trailing ghost clicks!)
     const swipeEl = container.querySelector('#prac-swipe-area');
     if (swipeEl) {
-      let sx = 0, sy = 0;
+      let sx = 0, sy = 0, active = false, moved = false;
       swipeEl.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-          sx = e.touches[0].clientX;
-          sy = e.touches[0].clientY;
+        if (e.touches.length !== 1) { active = false; return; }
+        if (e.target.closest('input, textarea')) { active = false; return; }
+        sx = e.touches[0].clientX;
+        sy = e.touches[0].clientY;
+        active = true;
+        moved = false;
+      }, { passive: true });
+      swipeEl.addEventListener('touchmove', (e) => {
+        if (!active || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - sx;
+        const dy = e.touches[0].clientY - sy;
+        if (Math.hypot(dx, dy) > 16) {
+          moved = true;
+          st.suppressClickUntil = Date.now() + 450;
         }
       }, { passive: true });
+      swipeEl.addEventListener('touchcancel', () => { active = false; }, { passive: true });
       swipeEl.addEventListener('touchend', (e) => {
-        if (e.changedTouches.length !== 1) return;
+        if (!active || e.changedTouches.length !== 1) { active = false; return; }
+        active = false;
         const dx = e.changedTouches[0].clientX - sx;
         const dy = e.changedTouches[0].clientY - sy;
-        if (Math.abs(dx) > 64 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+        if (moved || Math.abs(dx) > 16) {
+          st.suppressClickUntil = Date.now() + 480;
+        }
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (e.cancelable) e.preventDefault();
+          st.suppressClickUntil = Date.now() + 500;
           if (dx < 0 && st.currentIndex < st.questions.length - 1) {
             this.goIndex(st.currentIndex + 1, container, app);
           } else if (dx > 0 && st.currentIndex > 0) {
             this.goIndex(st.currentIndex - 1, container, app);
           }
         }
-      }, { passive: true });
+      }, { passive: false });
     }
   },
 

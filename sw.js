@@ -3,11 +3,11 @@
  * Pre-caches full app shell + initial 100-question bank for 100% offline usage.
  */
 
-const CACHE_NAME = 'shuatishq-pwa-v1.0.4';
+const CACHE_NAME = 'shuatishq-pwa-v1.0.6';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.webmanifest?v=2',
   './css/style.css',
   './js/importer.js',
   './js/db.js',
@@ -18,10 +18,10 @@ const CORE_ASSETS = [
   './js/views/banks.js',
   './js/views/more.js',
   './data/initial_bank.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png',
+  './icons/icon-192.png?v=2',
+  './icons/icon-512.png?v=2',
+  './icons/icon-maskable-512.png?v=2',
+  './icons/apple-touch-icon.png?v=2',
 ];
 
 self.addEventListener('install', (event) => {

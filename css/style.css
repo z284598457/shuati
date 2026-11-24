@@ -440,14 +440,14 @@ body.immersive-mode .app-main {
   border-radius: 22px;
   box-shadow: var(--shadow-sm);
   padding: 24px 16px 22px;
-  margin: -14px auto 16px;
+  margin: 4px auto 16px;
   position: relative;
   z-index: 5;
 }
 
 @media (min-width: 769px) {
   .twin-circles-card {
-    margin-top: 16px;
+    margin-top: 4px;
     padding: 28px 24px;
   }
 }

@@ -712,6 +712,7 @@ window.ST.Views.exam = {
 
     container.querySelectorAll('[data-ex-opt]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (Date.now() < (this.state.suppressClickUntil || 0)) return;
         if (item.is_locked) return;
         const letter = btn.dataset.exOpt;
         if (item.qtype === 'multiple') {
@@ -733,6 +734,7 @@ window.ST.Views.exam = {
     });
 
     container.querySelector('#btn-ex-multi-lock')?.addEventListener('click', () => {
+      if (Date.now() < (this.state.suppressClickUntil || 0)) return;
       const d = this.state.multiDraft[item.id] || '';
       if (d) saveAns(d);
     });
@@ -752,6 +754,7 @@ window.ST.Views.exam = {
       });
     }
     container.querySelector('#btn-ex-short-lock')?.addEventListener('click', () => {
+      if (Date.now() < (this.state.suppressClickUntil || 0)) return;
       const val = (this.state.shortDraft[item.id] ?? item.user_answer ?? '').trim();
       if (!val) { app.toast('请先输入作答内容', 'warning'); return; }
       saveAns(val);
@@ -815,22 +818,43 @@ window.ST.Views.exam = {
     container.querySelector('#ex-submit')?.addEventListener('click', promptSubmit);
     container.querySelector('#ex-finish-btn')?.addEventListener('click', promptSubmit);
 
-    // Touch swipe left / right
+    // Touch swipe left / right (suppresses trailing ghost clicks!)
     const swipe = container.querySelector('#exam-swipe-area');
     if (swipe) {
-      let sx = 0, sy = 0;
+      let sx = 0, sy = 0, active = false, moved = false;
       swipe.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }
+        if (e.touches.length !== 1) { active = false; return; }
+        if (e.target.closest('input, textarea')) { active = false; return; }
+        sx = e.touches[0].clientX;
+        sy = e.touches[0].clientY;
+        active = true;
+        moved = false;
       }, { passive: true });
+      swipe.addEventListener('touchmove', (e) => {
+        if (!active || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - sx;
+        const dy = e.touches[0].clientY - sy;
+        if (Math.hypot(dx, dy) > 16) {
+          moved = true;
+          this.state.suppressClickUntil = Date.now() + 450;
+        }
+      }, { passive: true });
+      swipe.addEventListener('touchcancel', () => { active = false; }, { passive: true });
       swipe.addEventListener('touchend', (e) => {
-        if (e.changedTouches.length !== 1) return;
+        if (!active || e.changedTouches.length !== 1) { active = false; return; }
+        active = false;
         const dx = e.changedTouches[0].clientX - sx;
         const dy = e.changedTouches[0].clientY - sy;
-        if (Math.abs(dx) > 64 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+        if (moved || Math.abs(dx) > 16) {
+          this.state.suppressClickUntil = Date.now() + 480;
+        }
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (e.cancelable) e.preventDefault();
+          this.state.suppressClickUntil = Date.now() + 500;
           if (dx < 0 && this.state.currentIndex < exam.items.length - 1) goIdx(this.state.currentIndex + 1);
           else if (dx > 0 && this.state.currentIndex > 0) goIdx(this.state.currentIndex - 1);
         }
-      }, { passive: true });
+      }, { passive: false });
     }
   },
 
