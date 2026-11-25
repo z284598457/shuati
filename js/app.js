@@ -6,6 +6,21 @@
 
 window.ST = window.ST || {};
 
+// Global capture-phase ghost-click suppressor for touch swipes
+let _suppressClickUntil = 0;
+window.ST.suppressClicksFor = function (ms = 650) {
+  _suppressClickUntil = Math.max(_suppressClickUntil, Date.now() + ms);
+};
+window.ST.isClickSuppressed = function () {
+  return Date.now() < _suppressClickUntil;
+};
+document.addEventListener('click', (e) => {
+  if (Date.now() < _suppressClickUntil) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }
+}, true);
+
 const App = {
   state: {
     currentView: 'home',
@@ -68,13 +83,21 @@ const App = {
 
     // Register Service Worker for full offline capability
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      let reloadedForSW = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hadController && !reloadedForSW) {
+          reloadedForSW = true;
+          window.location.reload();
+        }
+      });
       navigator.serviceWorker.register('./sw.js').then((reg) => {
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           if (!nw) return;
           nw.addEventListener('statechange', () => {
             if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              this.toast('发现新版本，刷新页面即可升级');
+              this.toast('正在更新至最新版本...');
             }
           });
         });

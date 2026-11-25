@@ -783,6 +783,7 @@ window.ST.Views.exam = {
 
     const goIdx = async (idx) => {
       await flushShort();
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       this.state.currentIndex = Math.max(0, Math.min(idx, exam.items.length - 1));
       this.paintTaking(container, app);
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -818,7 +819,7 @@ window.ST.Views.exam = {
     container.querySelector('#ex-submit')?.addEventListener('click', promptSubmit);
     container.querySelector('#ex-finish-btn')?.addEventListener('click', promptSubmit);
 
-    // Touch swipe left / right (suppresses trailing ghost clicks!)
+    // Touch swipe left / right (eliminates ghost clicks & sticky focus!)
     const swipe = container.querySelector('#exam-swipe-area');
     if (swipe) {
       let sx = 0, sy = 0, active = false, moved = false;
@@ -834,9 +835,10 @@ window.ST.Views.exam = {
         if (!active || e.touches.length !== 1) return;
         const dx = e.touches[0].clientX - sx;
         const dy = e.touches[0].clientY - sy;
-        if (Math.hypot(dx, dy) > 16) {
+        if (Math.hypot(dx, dy) > 10) {
           moved = true;
-          this.state.suppressClickUntil = Date.now() + 450;
+          this.state.suppressClickUntil = Date.now() + 600;
+          window.ST.suppressClicksFor(600);
         }
       }, { passive: true });
       swipe.addEventListener('touchcancel', () => { active = false; }, { passive: true });
@@ -845,14 +847,21 @@ window.ST.Views.exam = {
         active = false;
         const dx = e.changedTouches[0].clientX - sx;
         const dy = e.changedTouches[0].clientY - sy;
-        if (moved || Math.abs(dx) > 16) {
-          this.state.suppressClickUntil = Date.now() + 480;
+        if (moved || Math.abs(dx) > 10) {
+          this.state.suppressClickUntil = Date.now() + 650;
+          window.ST.suppressClicksFor(650);
         }
-        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.4) {
           if (e.cancelable) e.preventDefault();
-          this.state.suppressClickUntil = Date.now() + 500;
-          if (dx < 0 && this.state.currentIndex < exam.items.length - 1) goIdx(this.state.currentIndex + 1);
-          else if (dx > 0 && this.state.currentIndex > 0) goIdx(this.state.currentIndex - 1);
+          this.state.suppressClickUntil = Date.now() + 700;
+          window.ST.suppressClicksFor(700);
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+          const nextIdx = dx < 0
+            ? (this.state.currentIndex < exam.items.length - 1 ? this.state.currentIndex + 1 : -1)
+            : (this.state.currentIndex > 0 ? this.state.currentIndex - 1 : -1);
+          if (nextIdx >= 0) {
+            requestAnimationFrame(() => goIdx(nextIdx));
+          }
         }
       }, { passive: false });
     }

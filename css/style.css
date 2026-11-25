@@ -768,11 +768,19 @@ body.immersive-mode .app-main {
   text-align: left;
   font-size: var(--q-opt);
   line-height: 1.56;
-  transition: all 0.14s ease;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color 0.14s ease, background 0.14s ease;
 }
-.opt-btn:hover:not(.locked) {
-  border-color: var(--brand);
-  background: var(--brand-soft);
+.opt-btn:focus {
+  outline: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .opt-btn:hover:not(.locked):not(.selected) {
+    border-color: var(--border-strong);
+    background: var(--bg-subtle);
+  }
 }
 .opt-btn.selected {
   border-color: var(--brand);

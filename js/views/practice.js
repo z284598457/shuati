@@ -431,7 +431,7 @@ window.ST.Views.practice = {
       this.openAnswerSheetDrawer(container, app);
     });
 
-    // Touch swipe left / right for native mobile feel (suppresses trailing ghost clicks!)
+    // Touch swipe left / right for native mobile feel (eliminates ghost clicks & sticky focus!)
     const swipeEl = container.querySelector('#prac-swipe-area');
     if (swipeEl) {
       let sx = 0, sy = 0, active = false, moved = false;
@@ -447,9 +447,10 @@ window.ST.Views.practice = {
         if (!active || e.touches.length !== 1) return;
         const dx = e.touches[0].clientX - sx;
         const dy = e.touches[0].clientY - sy;
-        if (Math.hypot(dx, dy) > 16) {
+        if (Math.hypot(dx, dy) > 10) {
           moved = true;
-          st.suppressClickUntil = Date.now() + 450;
+          st.suppressClickUntil = Date.now() + 600;
+          window.ST.suppressClicksFor(600);
         }
       }, { passive: true });
       swipeEl.addEventListener('touchcancel', () => { active = false; }, { passive: true });
@@ -458,16 +459,20 @@ window.ST.Views.practice = {
         active = false;
         const dx = e.changedTouches[0].clientX - sx;
         const dy = e.changedTouches[0].clientY - sy;
-        if (moved || Math.abs(dx) > 16) {
-          st.suppressClickUntil = Date.now() + 480;
+        if (moved || Math.abs(dx) > 10) {
+          st.suppressClickUntil = Date.now() + 650;
+          window.ST.suppressClicksFor(650);
         }
-        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.4) {
           if (e.cancelable) e.preventDefault();
-          st.suppressClickUntil = Date.now() + 500;
-          if (dx < 0 && st.currentIndex < st.questions.length - 1) {
-            this.goIndex(st.currentIndex + 1, container, app);
-          } else if (dx > 0 && st.currentIndex > 0) {
-            this.goIndex(st.currentIndex - 1, container, app);
+          st.suppressClickUntil = Date.now() + 700;
+          window.ST.suppressClicksFor(700);
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+          const nextIdx = dx < 0
+            ? (st.currentIndex < st.questions.length - 1 ? st.currentIndex + 1 : -1)
+            : (st.currentIndex > 0 ? st.currentIndex - 1 : -1);
+          if (nextIdx >= 0) {
+            requestAnimationFrame(() => this.goIndex(nextIdx, container, app));
           }
         }
       }, { passive: false });
@@ -476,6 +481,7 @@ window.ST.Views.practice = {
 
   goIndex(idx, container, app) {
     this.cleanup();
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     const st = this.state;
     st.currentIndex = Math.max(0, Math.min(idx, st.questions.length - 1));
     if (st.mode === 'sequential') {
